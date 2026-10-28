@@ -19,6 +19,19 @@ header{position:sticky;top:0;z-index:1;flex:none;display:flex;flex-wrap:wrap;gap
 h1{font-size:15px;margin-right:auto;white-space:nowrap}
 select,button{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
 button{cursor:pointer}
+.ic{display:inline-flex;align-items:center;gap:6px}
+#fname{font:inherit;color:var(--fg);background:transparent;border:1px solid transparent;border-radius:4px;padding:0 4px;margin-left:-5px;text-transform:none;letter-spacing:0;width:24ch;min-width:0}
+#fname:hover,#fname:focus{border-color:var(--line);outline:0}
+dialog{margin:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);padding:20px;width:min(340px,calc(100vw - 32px));text-align:center}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+#qrimg{background:#fff;border-radius:8px;padding:14px;width:232px;height:232px;margin:0 auto 14px;display:grid;place-items:center;color:#555}
+#qrimg[hidden]{display:none}
+#qrimg svg{width:100%;height:100%}
+#qrmsg{font-size:13px;color:var(--mute);margin-bottom:12px}
+.row{display:flex;gap:6px;margin-bottom:12px}
+#qrurl{flex:1;min-width:0;font:12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+.row:has(#qrurl:placeholder-shown){display:none}
+dialog form button{width:100%}
 #run{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;min-width:84px}
 #run:disabled{opacity:.6;cursor:wait}
 main{flex:1;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr);gap:1px;background:var(--line);min-height:0}
@@ -38,7 +51,7 @@ textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparen
 .right{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,2fr);min-height:0;gap:1px;background:var(--line)}
 #out{flex:1;overflow:auto;padding:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
 #out .e{color:var(--err)}#out .m{color:var(--mute)}#out .ok{color:var(--ok)}
-@media (max-width:760px){body{height:auto;min-height:100dvh;overflow:visible}main{grid-template-columns:1fr;grid-template-rows:60vh auto}.right{grid-template-rows:120px 60vh}h1{display:none}header{padding:6px 8px;gap:6px}#cc{flex:1;min-width:0}}
+@media (max-width:760px){body{height:auto;min-height:100dvh;overflow:visible}main{grid-template-columns:1fr;grid-template-rows:60vh auto}.right{grid-template-rows:120px 60vh}h1,.lbl{display:none}header{padding:6px 8px;gap:6px;flex-wrap:nowrap}header select{padding:6px 2px;min-width:0}header .ic{padding:6px 8px}#run{min-width:0;padding:6px 12px;flex:none}#cc{flex:1;min-width:0}}
 </style>
 </head>
 <body>
@@ -49,12 +62,13 @@ textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparen
     <option>c++11</option><option>c++14</option><option>c++17</option><option selected>c++20</option><option>c++23</option><option>c++2c</option><option>gnu++20</option><option>gnu++23</option>
   </select>
   <select id="opt" aria-label="Optimization"><option>-O0</option><option>-O1</option><option selected>-O2</option><option>-O3</option><option>-Os</option></select>
-  <button id="share" title="Copy shareable link">Share</button>
+  <button id="dl" class="ic" title="Download file (Ctrl+S)" aria-label="Download file"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"/></svg><span class="lbl">Download</span></button>
+  <button id="qr" class="ic" title="Send to phone with a QR code" aria-label="Send to phone with a QR code"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM18 18h3v3h-3z"/></svg><span class="lbl">To phone</span></button>
   <button id="run" title="Ctrl/Cmd + Enter">▶ Run</button>
 </header>
 <main>
   <section>
-    <div class="bar"><span>main.cpp</span><span id="pos">1:1</span></div>
+    <div class="bar"><input id="fname" value="main.cpp" spellcheck="false" autocomplete="off" aria-label="File name"><span id="pos">1:1</span></div>
     <div class="ed"><div id="gut">1</div><div class="wrap"><pre id="hl" aria-hidden="true"></pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code"></textarea></div></div>
   </section>
   <div class="right">
@@ -62,6 +76,12 @@ textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparen
     <section><div class="bar"><span>output</span><span id="stat"></span></div><pre id="out" aria-live="polite"><span class="m">Press Run or Ctrl+Enter.</span></pre></section>
   </div>
 </main>
+<dialog id="dlg">
+  <div id="qrimg"></div>
+  <p id="qrmsg"></p>
+  <div class="row"><input id="qrurl" readonly placeholder=" " aria-label="Download link"><button id="qrcopy">Copy</button></div>
+  <form method="dialog"><button>Close</button></form>
+</dialog>
 <script>
 const $ = (id) => document.getElementById(id);
 const code = $('code'), gut = $('gut'), hl = $('hl'), out = $('out'), stat = $('stat'), run = $('run');
@@ -74,31 +94,18 @@ int main()
 }
 `;
 
-// ---- persistence & share (code is deflated into the URL hash) ----
+// ---- persistence ----
 // sessionStorage: survives reload of this tab, but a new tab starts fresh
 const store = { get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
                 set: (k, v) => { try { sessionStorage.setItem(k, v); } catch {} } };
-const b64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
-const pipe = async (data, T) => new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer());
-async function pack(o) { return b64u(await pipe(new TextEncoder().encode(JSON.stringify(o)), CompressionStream)); }
-async function unpack(s) { return JSON.parse(new TextDecoder().decode(await pipe(unb64u(s), DecompressionStream))); }
-
-const state = () => ({ code: code.value, stdin: $('stdin').value, compiler: $('cc').value, std: $('std').value, opt: $('opt').value });
+const state = () => ({ name: $('fname').value, code: code.value, stdin: $('stdin').value, compiler: $('cc').value, std: $('std').value, opt: $('opt').value });
 function apply(s) {
+  if (s.name) $('fname').value = s.name;
   if (s.code != null) code.value = s.code;
   if (s.stdin != null) $('stdin').value = s.stdin;
   for (const [k, id] of [['std', 'std'], ['opt', 'opt']]) if (s[k]) $(id).value = s[k];
   if (s.compiler) { $('cc').dataset.want = s.compiler; $('cc').value = s.compiler; if (!$('cc').value) $('cc').selectedIndex = 0; }
 }
-// Load a shared link (#...) into the editor, then drop the hash so reloads keep later edits
-async function fromHash() {
-  if (location.hash.length < 2) return false;
-  try { apply(await unpack(location.hash.slice(1))); save(); return true; }
-  catch { return false; }
-  finally { history.replaceState(null, '', location.pathname + location.search); }
-}
-addEventListener('hashchange', async () => { if (await fromHash()) { lines(); pos(); } });
 const save = () => store.set('cpp', JSON.stringify(state()));
 
 // ---- syntax highlighting (VS Code Light+/Dark+ colours, bracket-pair colours) ----
@@ -190,24 +197,65 @@ async function go() {
   }
 }
 run.onclick = go;
-addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); go(); } });
+addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  if (e.key === 'Enter') { e.preventDefault(); go(); }
+  else if (e.key.toLowerCase() === 's') { e.preventDefault(); download(); }
+});
 ['stdin', 'std', 'opt', 'cc'].forEach((id) => $(id).addEventListener('change', save));
-$('stdin').addEventListener('input', save);
+['stdin', 'fname'].forEach((id) => $(id).addEventListener('input', save));
 
-$('share').onclick = async () => {
-  const url = `${location.origin}${location.pathname}#${await pack(state())}`;
-  try { await navigator.clipboard.writeText(url); $('share').textContent = 'Copied!'; }
-  catch { prompt('Copy this link:', url); }
-  setTimeout(() => ($('share').textContent = 'Share'), 1500);
+// ---- download on this device / send to phone via QR ----
+const fname = () => { const n = $('fname').value.trim() || 'main.cpp'; return /\.\w+$/.test(n) ? n : n + '.cpp'; };
+function download() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([code.value], { type: 'text/x-c++src' }));
+  a.download = fname();
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+let qrLib; // QR generator is only downloaded the first time it's needed
+const loadQr = () => (qrLib ||= new Promise((ok, no) => {
+  const sc = document.createElement('script');
+  sc.src = '/qr.js';
+  sc.onload = () => ok(window.qrcode);
+  sc.onerror = () => { qrLib = null; no(new Error('Could not load the QR generator.')); };
+  document.head.append(sc);
+}));
+async function toPhone() {
+  const img = $('qrimg'), msg = $('qrmsg'), link = $('qrurl');
+  img.hidden = false; img.textContent = 'Uploading…'; msg.textContent = ''; link.value = '';
+  $('dlg').showModal();
+  try {
+    const [d, qrcode] = await Promise.all([
+      fetch('/api/save', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: code.value, name: fname() }) })
+        .then(async (r) => { const d = await r.json().catch(() => ({ error: `HTTP ${r.status}` })); if (d.error) throw new Error(d.error); return d; }),
+      loadQr(),
+    ]);
+    const q = qrcode(0, 'M');
+    q.addData(d.url);
+    q.make();
+    img.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    msg.textContent = `Scan with your phone camera to download ${d.name}. The link works for ${d.days} days.`;
+    link.value = d.url;
+  } catch (err) {
+    img.hidden = true;
+    msg.textContent = err.message;
+  }
+}
+$('dl').onclick = download;
+$('qr').onclick = toPhone;
+$('qrcopy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('qrurl').value); $('qrcopy').textContent = 'Copied'; }
+  catch { $('qrurl').select(); }
+  setTimeout(() => ($('qrcopy').textContent = 'Copy'), 1500);
 };
 
 // ---- init ----
 (async () => {
-  if (!(await fromHash())) {
-    let s = null;
-    try { s = JSON.parse(store.get('cpp')); } catch {}
-    apply(s || { code: DEMO });
-  }
+  let s = null;
+  try { s = JSON.parse(store.get('cpp')); } catch {}
+  apply(s || { code: DEMO });
   lines(); pos();
 
   try {
