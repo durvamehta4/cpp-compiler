@@ -35,10 +35,14 @@ async function godbolt({ compiler, code, stdin, std, opt }) {
   if (!r.ok) throw new Error(`Compiler Explorer ${r.status}`);
   const d = await r.json();
   const b = d.buildResult || {};
+  // When the program didn't run, the top-level stdout/stderr carry the reason (e.g. "Build failed")
+  const compile = [lines(b.stdout), lines(b.stderr), d.didExecute ? '' : lines(d.stdout), d.didExecute ? '' : lines(d.stderr)]
+    .filter(Boolean).join('\n');
+  if (!d.didExecute && !compile) throw new Error(`Compiler Explorer returned no result (code ${d.code})`);
   return {
     status: String(d.didExecute ? d.code : (b.code ?? d.code)),
     signal: d.timedOut ? 'Timed out' : '',
-    compile: [lines(b.stdout), lines(b.stderr)].filter(Boolean).join('\n'),
+    compile,
     stdout: d.didExecute ? lines(d.stdout) : '',
     stderr: d.didExecute ? lines(d.stderr) : '',
     engine: 'Compiler Explorer',
@@ -84,6 +88,8 @@ export async function onRequestPost({ request }) {
   if (!job.code.trim()) return json({ error: 'No code' }, 400);
   if (job.code.length > MAX || job.stdin.length > MAX) return json({ error: 'Input too large (64 KB max)' }, 413);
   if (!/^[\w.+-]{1,64}$/.test(job.compiler)) return json({ error: 'Bad compiler name' }, 400);
+  // Old Wandbox-style names (e.g. "gcc-head") from a cached compiler list -> newest Compiler Explorer build
+  if (!/^(g|clang)\d+$/.test(job.compiler)) job.compiler = job.compiler.startsWith('clang') ? 'clang2310' : 'g162';
 
   const t0 = Date.now();
   const errors = [];

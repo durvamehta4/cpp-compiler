@@ -29,7 +29,7 @@ export async function onRequestGet() {
       .slice(0, PER_FAMILY).map(({ name, label }) => ({ name, label }));
     const list = [...top(fams.gcc), ...top(fams.clang)];
     if (!list.length) throw new Error('empty list');
-    return json(list, 200, { 'cache-control': 'public, max-age=3600' });
+    return json(list, 200, { 'cache-control': 'public, max-age=600' });
   } catch {
     return json(FALLBACK, 200, { 'cache-control': 'public, max-age=300' });
   }
