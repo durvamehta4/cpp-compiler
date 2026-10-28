@@ -7,4 +7,4 @@ compatibility_date = "2026-10-01"
 # 2. Copy its ID, paste it below, and remove the "#" from the three lines
 [[kv_namespaces]]
 binding = "FILES"
-id = "cpp-files"
+id = "4886eaedebcf4ea2b49478cd8ba22d59"
