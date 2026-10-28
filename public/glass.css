@@ -1,0 +1,108 @@
+/* Glass UI: liquid-glass panels, animated aurora, motion. Loaded only when the "Glass" style is switched on. */
+html.glass{
+  --base:#eceffd;--fg:#1e2340;--code:#1e2340;--mute:#5b6287;--ln:#8d93bb;--line:rgba(30,35,90,.12);--acc:#6d5dfc;--gut:transparent;--panel:transparent;
+  --gl:rgba(255,255,255,.5);--gl2:rgba(255,255,255,.2);--rim:rgba(255,255,255,.95);--rim2:rgba(255,255,255,.55);--ctl:rgba(255,255,255,.45);--ctlh:rgba(255,255,255,.75);
+  --glow:rgba(109,93,252,.35);--drop:rgba(50,50,120,.22);--dlg:rgba(255,255,255,.55);--shade:rgba(30,30,80,.2);
+  --o1:#b4a2ff;--o2:#7eeaff;--o3:#ffb3dc;--o4:#9cc4ff;--sel:rgba(109,93,252,.2);--okc:22,163,74;--errc:220,38,38}
+@media (prefers-color-scheme:dark){html.glass{
+  --base:#05051a;--fg:#e6e8ff;--code:#e1e4ff;--mute:#9aa0c8;--ln:#5e6494;--line:rgba(255,255,255,.09);--acc:#8b7bff;
+  --gl:rgba(255,255,255,.075);--gl2:rgba(255,255,255,.015);--rim:rgba(255,255,255,.55);--rim2:rgba(255,255,255,.1);--ctl:rgba(255,255,255,.06);--ctlh:rgba(255,255,255,.13);
+  --glow:rgba(139,123,255,.5);--drop:rgba(0,0,0,.6);--dlg:rgba(22,20,50,.45);--shade:rgba(2,2,12,.45);
+  --o1:#6d28d9;--o2:#0e7490;--o3:#be185d;--o4:#1d4ed8;--sel:rgba(255,255,255,.2);--okc:74,222,128;--errc:248,113,113}}
+
+html.glass body{background:var(--base);color:var(--fg)}
+html.glass *{scrollbar-color:var(--line) transparent}
+
+/* animated aurora behind everything */
+html.glass #fx{display:block;position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+#fx i{position:absolute;width:62vmax;height:62vmax;border-radius:50%;background:radial-gradient(circle,var(--c) 0,transparent 64%);opacity:.75;will-change:transform;animation:drift 26s ease-in-out infinite alternate}
+#fx i:nth-child(1){--c:var(--o1);left:-18vmax;top:-24vmax}
+#fx i:nth-child(2){--c:var(--o2);right:-22vmax;top:-14vmax;animation-duration:32s;animation-delay:-9s}
+#fx i:nth-child(3){--c:var(--o3);left:12vmax;bottom:-34vmax;animation-duration:29s;animation-delay:-15s}
+#fx i:nth-child(4){--c:var(--o4);right:-12vmax;bottom:-28vmax;animation-duration:37s;animation-delay:-4s}
+#fx::after{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0,#000 0,transparent 75%);mask-image:radial-gradient(ellipse at 50% 0,#000 0,transparent 75%)}
+@keyframes drift{33%{transform:translate(9vmax,7vmax) scale(1.15)}66%{transform:translate(-7vmax,11vmax) scale(.9)}100%{transform:translate(5vmax,-6vmax) scale(1.08)}}
+
+/* liquid-glass surfaces: frosted body, bright specular rim, light that follows the pointer */
+html.glass header,html.glass section{position:relative;border-radius:18px;
+  background:radial-gradient(420px circle at var(--mx,-999px) var(--my,-999px),var(--ctl),transparent 60%),linear-gradient(140deg,var(--gl),var(--gl2));
+  -webkit-backdrop-filter:blur(24px) saturate(185%);backdrop-filter:blur(24px) saturate(185%);
+  box-shadow:inset 0 1px 0 var(--rim2),inset 0 0 30px rgba(255,255,255,.03),0 22px 50px -22px var(--drop);transition:box-shadow .6s}
+html.glass header::before,html.glass section::before{content:"";position:absolute;inset:0;z-index:3;border-radius:inherit;padding:1px;pointer-events:none;
+  background:radial-gradient(260px circle at var(--mx,-999px) var(--my,-999px),var(--rim),transparent 65%),linear-gradient(135deg,var(--rim2),transparent 35%,transparent 65%,var(--rim2));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+html.glass header{position:sticky;z-index:2;margin:12px 12px 0;padding:9px 12px;border:0;top:12px;animation:drop .7s cubic-bezier(.2,.8,.2,1) both}
+html.glass main{position:relative;z-index:1;background:transparent;gap:12px;padding:12px}
+html.glass .right{background:transparent;gap:12px}
+html.glass section{overflow:hidden;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+html.glass main>section{animation-delay:.08s}
+html.glass .right>section:first-child{animation-delay:.16s}
+html.glass .right>section:last-child{animation-delay:.24s}
+@keyframes drop{from{opacity:0;transform:translateY(-18px) scale(.98)}}
+@keyframes rise{from{opacity:0;transform:translateY(26px) scale(.97)}}
+
+/* title */
+html.glass h1{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.01em;background:linear-gradient(90deg,var(--fg),var(--acc),#ec4899,var(--fg));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:hue 7s ease-in-out infinite alternate}
+html.glass h1::before{content:"";width:12px;height:12px;border-radius:50%;flex:none;background:conic-gradient(#6d5dfc,#22d3ee,#ec4899,#6d5dfc);box-shadow:0 0 14px #8b7bff,0 0 4px #fff inset;animation:spin 4s linear infinite}
+@keyframes hue{to{background-position:100% 0}}
+@keyframes spin{to{transform:rotate(1turn)}}
+
+/* controls */
+html.glass select,html.glass button{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--ctl);color:var(--fg);
+  box-shadow:inset 0 1px 0 var(--rim2);transition:transform .25s cubic-bezier(.3,1.5,.5,1),background .25s,box-shadow .25s,border-color .25s}
+html.glass select:hover,html.glass button:hover{background:var(--ctlh);border-color:var(--rim2);transform:translateY(-2px);box-shadow:inset 0 1px 0 var(--rim2),0 10px 22px -10px var(--glow)}
+html.glass select:active,html.glass button:active{transform:translateY(0) scale(.96)}
+html.glass select:focus-visible,html.glass button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+html.glass option{background:var(--base);color:var(--fg)}
+html.glass button::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.5) 50%,transparent 65%);transform:translateX(-130%);transition:transform .7s}
+html.glass button:hover::before{transform:translateX(130%)}
+html.glass button.rip::after{content:"";position:absolute;left:var(--rx);top:var(--ry);width:10px;height:10px;margin:-5px;border-radius:50%;background:rgba(255,255,255,.55);pointer-events:none;animation:ripple .65s ease-out forwards}
+@keyframes ripple{to{transform:scale(36);opacity:0}}
+html.glass #ui{background:linear-gradient(135deg,rgba(167,139,250,.4),rgba(34,211,238,.25));border-color:var(--rim2)}
+html.glass #ui svg{animation:twinkle 2.6s ease-in-out infinite}
+@keyframes twinkle{50%{transform:rotate(18deg) scale(1.18);filter:drop-shadow(0 0 5px #c4b5fd)}}
+
+html.glass #run{border:0;color:#fff;font-weight:700;background:linear-gradient(110deg,#6d5dfc,#a855f7 35%,#ec4899 65%,#6d5dfc);background-size:250% 100%;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 10px 26px -8px rgba(168,85,247,.75);animation:hue 5s ease-in-out infinite alternate}
+html.glass #run:hover{transform:translateY(-2px) scale(1.04);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 14px 34px -6px rgba(236,72,153,.75)}
+html.glass #run:disabled{opacity:1;animation-duration:1s}
+html.glass #run:disabled::before{position:static;display:inline-block;width:12px;height:12px;margin-right:7px;vertical-align:-2px;background:none;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;transform:none;transition:none;animation:spin .7s linear infinite}
+
+/* panels */
+html.glass .bar{border-bottom-color:var(--line);padding:7px 14px;font-weight:600;letter-spacing:.08em}
+html.glass #gut{background:transparent;border-right:1px solid var(--line);padding-right:10px}
+html.glass #fname{font-weight:600;color:var(--fg)}
+html.glass #fname:hover,html.glass #fname:focus{border-color:var(--rim2);background:var(--ctl)}
+html.glass #stat:not(:empty){text-transform:none;letter-spacing:0;padding:1px 10px;border-radius:99px;background:var(--ctl);border:1px solid var(--line);animation:pop .45s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.6)}}
+html.glass #out.pop{animation:reveal .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes reveal{from{opacity:0;transform:translateY(8px);filter:blur(5px)}}
+html.glass section[data-res=ok]{box-shadow:inset 0 1px 0 var(--rim2),0 0 0 1px rgba(var(--okc),.45),0 0 46px -8px rgba(var(--okc),.5)}
+html.glass section[data-res=err]{box-shadow:inset 0 1px 0 var(--rim2),0 0 0 1px rgba(var(--errc),.45),0 0 46px -8px rgba(var(--errc),.5)}
+html.glass section:focus-within{box-shadow:inset 0 1px 0 var(--rim2),0 0 0 1px var(--glow),0 22px 50px -22px var(--drop)}
+
+/* QR dialog */
+html.glass dialog{border:1px solid var(--rim2);border-radius:24px;padding:24px;background:linear-gradient(140deg,var(--gl),var(--gl2)),var(--dlg);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:inset 0 1px 0 var(--rim2),0 40px 90px -25px rgba(0,0,0,.6)}
+html.glass dialog[open]{animation:zoom .5s cubic-bezier(.2,1.3,.3,1) both}
+html.glass dialog::backdrop{background:var(--shade);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fade .3s both}
+html.glass #qrimg{border-radius:18px;box-shadow:0 16px 36px -14px rgba(0,0,0,.55);animation:rise .6s .1s cubic-bezier(.2,.8,.2,1) both}
+html.glass #qrurl{border-radius:10px;background:var(--ctl);border-color:var(--line)}
+@keyframes zoom{from{opacity:0;transform:translateY(16px) scale(.9)}}
+@keyframes fade{from{opacity:0}}
+
+/* circular reveal when switching styles */
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-new(root){animation:reveal-ui .75s cubic-bezier(.7,0,.2,1)}
+@keyframes reveal-ui{from{clip-path:circle(0 at var(--vx,50%) var(--vy,0))}to{clip-path:circle(150vmax at var(--vx,50%) var(--vy,0))}}
+
+@media (max-width:760px){
+  html.glass h1{display:none}
+  html.glass header{margin:6px 6px 0;top:6px;padding:6px;gap:5px;border-radius:14px}
+  html.glass main,html.glass .right{gap:8px}
+  html.glass main{padding:8px 6px}
+  html.glass select,html.glass button{border-radius:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  html.glass *,html.glass *::before,html.glass *::after,::view-transition-new(root){animation:none!important;transition:none!important}
+}

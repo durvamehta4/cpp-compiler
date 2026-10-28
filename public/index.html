@@ -51,10 +51,13 @@ textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparen
 .right{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,2fr);min-height:0;gap:1px;background:var(--line)}
 #out{flex:1;overflow:auto;padding:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
 #out .e{color:var(--err)}#out .m{color:var(--mute)}#out .ok{color:var(--ok)}
-@media (max-width:760px){body{height:auto;min-height:100dvh;overflow:visible}main{grid-template-columns:1fr;grid-template-rows:60vh auto}.right{grid-template-rows:120px 60vh}h1,.lbl{display:none}header{padding:6px 8px;gap:6px;flex-wrap:nowrap}header select{padding:6px 2px;min-width:0}header .ic{padding:6px 8px}#run{min-width:0;padding:6px 12px;flex:none}#cc{flex:1;min-width:0}}
+#fx{display:none}
+@media (max-width:760px){body{height:auto;min-height:100dvh;overflow:visible}main{grid-template-columns:1fr;grid-template-rows:60vh auto}.right{grid-template-rows:120px 60vh}h1,.lbl{display:none}header{padding:6px 8px;gap:6px;flex-wrap:nowrap}header select{-webkit-appearance:none;appearance:none;padding:6px 4px;min-width:0;font-size:13px;text-align:center}#std{width:56px}#opt{width:38px}header .ic{padding:6px}#run{min-width:0;padding:6px 10px;flex:none}#cc{flex:1;min-width:0}}
 </style>
+<script>try{if(localStorage.getItem('ui')==='glass'){document.documentElement.className='glass';document.write('<link rel="stylesheet" href="/glass.css">')}}catch(e){}</script>
 </head>
 <body>
+<div id="fx" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <header>
   <h1>C++ Compiler</h1>
   <select id="cc" aria-label="Compiler"><option value="g162">GCC 16.2</option></select>
@@ -62,6 +65,7 @@ textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparen
     <option>c++11</option><option>c++14</option><option>c++17</option><option selected>c++20</option><option>c++23</option><option>c++2c</option><option>gnu++20</option><option>gnu++23</option>
   </select>
   <select id="opt" aria-label="Optimization"><option>-O0</option><option>-O1</option><option selected>-O2</option><option>-O3</option><option>-Os</option></select>
+  <button id="ui" class="ic" aria-pressed="false" title="Switch to the glass UI"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9zM18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg><span class="lbl">Glass</span></button>
   <button id="dl" class="ic" title="Download file (Ctrl+S)" aria-label="Download file"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"/></svg><span class="lbl">Download</span></button>
   <button id="qr" class="ic" title="Send to phone with a QR code" aria-label="Send to phone with a QR code"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM18 18h3v3h-3z"/></svg><span class="lbl">To phone</span></button>
   <button id="run" title="Ctrl/Cmd + Enter">▶ Run</button>
@@ -84,7 +88,7 @@ textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparen
 </dialog>
 <script>
 const $ = (id) => document.getElementById(id);
-const code = $('code'), gut = $('gut'), hl = $('hl'), out = $('out'), stat = $('stat'), run = $('run');
+const code = $('code'), gut = $('gut'), hl = $('hl'), out = $('out'), stat = $('stat'), run = $('run'), outSec = out.closest('section');
 const DEMO = `#include <iostream>
 using namespace std;
 
@@ -177,7 +181,7 @@ code.addEventListener('keydown', (e) => {
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 async function go() {
   if (run.disabled) return;
-  run.disabled = true; run.textContent = 'Running…'; stat.textContent = '';
+  run.disabled = true; run.textContent = 'Running…'; stat.textContent = ''; delete outSec.dataset.res;
   out.innerHTML = '<span class="m">Compiling…</span>';
   try {
     const r = await fetch('/api/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(state()) });
@@ -189,11 +193,14 @@ async function go() {
     if (d.stderr) h += `<span class="e">${esc(d.stderr)}</span>`;
     out.innerHTML = h || '<span class="m">(no output)</span>';
     const ok = d.status === '0';
+    outSec.dataset.res = ok ? 'ok' : 'err';
     stat.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'err'})">${d.signal ? esc(d.signal) : 'exit ' + esc(String(d.status ?? '?'))}</span> · ${d.ms} ms${d.engine ? ' · ' + esc(d.engine) : ''}`;
   } catch (err) {
     out.innerHTML = `<span class="e">${esc(err.message)}</span>`;
+    outSec.dataset.res = 'err';
   } finally {
     run.disabled = false; run.textContent = '▶ Run';
+    out.classList.remove('pop'); void out.offsetWidth; out.classList.add('pop');
   }
 }
 run.onclick = go;
@@ -251,12 +258,55 @@ $('qrcopy').onclick = async () => {
   setTimeout(() => ($('qrcopy').textContent = 'Copy'), 1500);
 };
 
+// ---- UI style: lightweight (default) or glass; the glass stylesheet is only downloaded when used ----
+const root = document.documentElement, ui = $('ui');
+const glassOn = () => root.classList.contains('glass');
+function glassCss() {
+  let l = document.querySelector('link[href="/glass.css"]');
+  if (l?.sheet) return Promise.resolve();
+  if (!l) { l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/glass.css'; document.head.append(l); }
+  return new Promise((ok) => { l.onload = ok; l.onerror = () => { l.remove(); ok(); }; });
+}
+function syncUi() {
+  const on = glassOn();
+  ui.setAttribute('aria-pressed', on);
+  ui.title = on ? 'Switch to the lightweight UI' : 'Switch to the glass UI';
+  ui.querySelector('.lbl').textContent = on ? 'Lite' : 'Glass';
+}
+ui.onclick = async () => {
+  const on = !glassOn();
+  if (on) await glassCss();
+  try { localStorage.setItem('ui', on ? 'glass' : 'lite'); } catch {}
+  const flip = () => { root.classList.toggle('glass', on); syncUi(); };
+  if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) return flip();
+  const r = ui.getBoundingClientRect();
+  root.style.setProperty('--vx', r.left + r.width / 2 + 'px');
+  root.style.setProperty('--vy', r.top + r.height / 2 + 'px');
+  document.startViewTransition(flip);
+};
+// glass only: light that follows the pointer, ripple on click
+addEventListener('pointermove', (e) => {
+  const p = glassOn() && e.target.closest?.('section, header');
+  if (!p) return;
+  const r = p.getBoundingClientRect();
+  p.style.setProperty('--mx', e.clientX - r.left + 'px');
+  p.style.setProperty('--my', e.clientY - r.top + 'px');
+}, { passive: true });
+addEventListener('pointerdown', (e) => {
+  const b = glassOn() && e.target.closest?.('button');
+  if (!b) return;
+  const r = b.getBoundingClientRect();
+  b.style.setProperty('--rx', e.clientX - r.left + 'px');
+  b.style.setProperty('--ry', e.clientY - r.top + 'px');
+  b.classList.remove('rip'); void b.offsetWidth; b.classList.add('rip');
+});
+
 // ---- init ----
 (async () => {
   let s = null;
   try { s = JSON.parse(store.get('cpp')); } catch {}
   apply(s || { code: DEMO });
-  lines(); pos();
+  lines(); pos(); syncUi();
 
   try {
     const list = await (await fetch('/api/compilers?v=2')).json();
