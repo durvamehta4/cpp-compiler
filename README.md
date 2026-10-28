@@ -1,12 +1,12 @@
 # C++ Online Compiler
 
-A tiny online C++ compiler for Cloudflare Pages. It's one static HTML file (~10 KB, no frameworks, no build step) plus two Pages Functions that pass requests on to the free [Wandbox](https://wandbox.org) API.
+A tiny online C++ compiler for Cloudflare Pages. It is one static HTML file (~10 KB, no frameworks, no build step) plus two Pages Functions that send code to the free [Compiler Explorer](https://godbolt.org) API, falling back to [Wandbox](https://wandbox.org) if it is down.
 
 ```
 public/index.html          editor + UI (inline CSS/JS)
 public/_headers            security headers
-functions/api/run.js       POST /api/run       -> Wandbox compile.json
-functions/api/compilers.js GET  /api/compilers -> C++ compilers on Wandbox (edge-cached)
+functions/api/run.js       POST /api/run       -> Compiler Explorer (Wandbox fallback)
+functions/api/compilers.js GET  /api/compilers -> latest GCC/Clang list (edge-cached)
 wrangler.toml
 ```
 
