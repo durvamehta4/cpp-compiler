@@ -7,9 +7,9 @@
 <meta name="description" content="Fast, lightweight online C++ compiler. Write, compile and run C++ in your browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-size='14' font-family='monospace' font-weight='bold' fill='white' text-anchor='middle'%3EC++%3C/text%3E%3C/svg%3E">
 <style>
-:root{--bg:#f8f8f8;--panel:#fff;--fg:#3b3b3b;--code:#000;--mute:#6e7681;--ln:#237893;--line:#e5e5e5;--acc:#005fb8;--ok:#388a34;--err:#e51400;--gut:#fff;--sel:rgba(0,120,215,.25);
+:root{--bg:#f8f8f8;--panel:#fff;--fg:#3b3b3b;--code:#000;--mute:#6e7681;--ln:#237893;--line:#e5e5e5;--acc:#005fb8;--ok:#388a34;--err:#e51400;--gut:#fff;--sel:rgba(0,90,200,.14);
   --k:#0000ff;--c:#af00db;--t:#267f99;--f:#795e26;--s:#a31515;--n:#098658;--cm:#008000;--v:#001080;--mc:#0070c1;--b0:#0431fa;--b1:#319331;--b2:#7b3814;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#181818;--panel:#1f1f1f;--fg:#cccccc;--code:#d4d4d4;--mute:#9d9d9d;--ln:#6e7681;--line:#2b2b2b;--acc:#0078d4;--ok:#89d185;--err:#f85149;--gut:#1f1f1f;--sel:rgba(38,120,215,.4);
+@media (prefers-color-scheme:dark){:root{--bg:#181818;--panel:#1f1f1f;--fg:#cccccc;--code:#d4d4d4;--mute:#9d9d9d;--ln:#6e7681;--line:#2b2b2b;--acc:#0078d4;--ok:#89d185;--err:#f85149;--gut:#1f1f1f;--sel:rgba(255,255,255,.16);
   --k:#569cd6;--c:#c586c0;--t:#4ec9b0;--f:#dcdcaa;--s:#ce9178;--n:#b5cea8;--cm:#6a9955;--v:#9cdcfe;--mc:#4fc1ff;--b0:#ffd700;--b1:#da70d6;--b2:#179fff;color-scheme:dark}}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
@@ -40,10 +40,10 @@ section{background:var(--panel);display:flex;flex-direction:column;min-height:0;
 .ed{flex:1;display:flex;min-height:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 #gut{padding:8px 6px 40px;text-align:right;color:var(--ln);background:var(--gut);overflow:hidden;user-select:none;white-space:pre;min-width:3em}
 textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparent;color:inherit;font:inherit;tab-size:4;white-space:pre;overflow:auto}
-/* syntax highlighting: coloured <pre> sits under a transparent-text textarea */
+/* syntax highlighting: coloured <pre> sits over a transparent-text textarea, so the caret and selection show through */
 .wrap{position:relative;flex:1;min-width:0}
 .wrap>*{position:absolute;inset:0;margin:0;padding:8px;font:inherit;tab-size:4;white-space:pre}
-#hl{overflow:hidden;pointer-events:none;color:var(--code);padding:8px 48px 48px 8px}
+#hl{overflow:hidden;pointer-events:none;color:var(--code);padding:8px 48px 48px 8px;z-index:2}
 #code{color:transparent;caret-color:var(--code);z-index:1}
 #code::selection{background:var(--sel);color:transparent}
 #hl .k{color:var(--k)}#hl .c{color:var(--c)}#hl .t{color:var(--t)}#hl .f{color:var(--f)}#hl .s{color:var(--s)}#hl .n{color:var(--n)}
