@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C++ Online Compiler</title>
+<meta name="description" content="Fast, lightweight online C++ compiler. Write, compile and run C++ in your browser.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-size='14' font-family='monospace' font-weight='bold' fill='white' text-anchor='middle'%3EC++%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--fg:#1f2328;--mute:#6b7280;--line:#d8dce2;--acc:#2563eb;--ok:#16a34a;--err:#dc2626;--gut:#eef0f3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--panel:#161b22;--fg:#e6edf3;--mute:#8b949e;--line:#30363d;--acc:#3b82f6;--ok:#3fb950;--err:#f85149;--gut:#11161d;color-scheme:dark}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font-size:15px;margin-right:auto;white-space:nowrap}
+select,button{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+button{cursor:pointer}
+#run{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;min-width:84px}
+#run:disabled{opacity:.6;cursor:wait}
+main{flex:1;display:grid;grid-template-columns:3fr 2fr;gap:1px;background:var(--line);min-height:0}
+section{background:var(--panel);display:flex;flex-direction:column;min-height:0;min-width:0}
+.bar{display:flex;justify-content:space-between;padding:4px 10px;font-size:12px;color:var(--mute);border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em}
+.ed{flex:1;display:flex;min-height:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#gut{padding:8px 6px;text-align:right;color:var(--mute);background:var(--gut);overflow:hidden;user-select:none;white-space:pre;min-width:3em}
+textarea{flex:1;resize:none;border:0;outline:0;padding:8px;background:transparent;color:inherit;font:inherit;tab-size:4;white-space:pre;overflow:auto}
+.right{display:grid;grid-template-rows:1fr 2fr;gap:1px;background:var(--line)}
+#out{flex:1;overflow:auto;padding:8px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+#out .e{color:var(--err)}#out .m{color:var(--mute)}#out .ok{color:var(--ok)}
+@media (max-width:760px){main{grid-template-columns:1fr;grid-template-rows:55vh auto}.right{grid-template-rows:120px minmax(200px,1fr)}h1{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <h1>C++ Compiler</h1>
+  <select id="cc" aria-label="Compiler"><option value="gcc-head">gcc HEAD</option></select>
+  <select id="std" aria-label="Standard">
+    <option>c++11</option><option>c++14</option><option>c++17</option><option selected>c++20</option><option>c++23</option><option>c++2c</option><option>gnu++20</option><option>gnu++23</option>
+  </select>
+  <select id="opt" aria-label="Optimization"><option>-O0</option><option>-O1</option><option selected>-O2</option><option>-O3</option><option>-Os</option></select>
+  <button id="share" title="Copy shareable link">Share</button>
+  <button id="run" title="Ctrl/Cmd + Enter">▶ Run</button>
+</header>
+<main>
+  <section>
+    <div class="bar"><span>main.cpp</span><span id="pos">1:1</span></div>
+    <div class="ed"><div id="gut">1</div><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Code"></textarea></div>
+  </section>
+  <div class="right">
+    <section><div class="bar"><span>stdin</span></div><div class="ed"><textarea id="stdin" spellcheck="false" aria-label="Standard input"></textarea></div></section>
+    <section><div class="bar"><span>output</span><span id="stat"></span></div><pre id="out" aria-live="polite"><span class="m">Press Run or Ctrl+Enter.</span></pre></section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const code = $('code'), gut = $('gut'), out = $('out'), stat = $('stat'), run = $('run');
+const DEMO = `#include <iostream>
+using namespace std;
+
+int main()
+{
+    return 0;
+}
+`;
+
+// ---- persistence & share (code is deflated into the URL hash) ----
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+const b64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+const pipe = async (data, T) => new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer());
+async function pack(o) { return b64u(await pipe(new TextEncoder().encode(JSON.stringify(o)), CompressionStream)); }
+async function unpack(s) { return JSON.parse(new TextDecoder().decode(await pipe(unb64u(s), DecompressionStream))); }
+
+const state = () => ({ code: code.value, stdin: $('stdin').value, compiler: $('cc').value, std: $('std').value, opt: $('opt').value });
+function apply(s) {
+  if (s.code != null) code.value = s.code;
+  if (s.stdin != null) $('stdin').value = s.stdin;
+  for (const [k, id] of [['std', 'std'], ['opt', 'opt']]) if (s[k]) $(id).value = s[k];
+  if (s.compiler) $('cc').dataset.want = s.compiler;
+}
+const save = () => store.set('cpp', JSON.stringify(state()));
+
+// ---- editor: gutter, tab, auto-indent, bracket close ----
+function lines() {
+  const n = code.value.split('\n').length;
+  if (gut.dataset.n != n) { gut.dataset.n = n; gut.textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n'); }
+}
+function pos() {
+  const b = code.value.slice(0, code.selectionStart).split('\n');
+  $('pos').textContent = `${b.length}:${b.at(-1).length + 1}`;
+}
+const ins = (t) => document.execCommand('insertText', false, t) || code.setRangeText(t, code.selectionStart, code.selectionEnd, 'end');
+code.addEventListener('input', () => { lines(); pos(); save(); });
+code.addEventListener('scroll', () => (gut.scrollTop = code.scrollTop));
+['click', 'keyup'].forEach((e) => code.addEventListener(e, pos));
+code.addEventListener('keydown', (e) => {
+  const { selectionStart: s, selectionEnd: t, value: v } = code;
+  if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    if (e.shiftKey) {
+      const ls = v.lastIndexOf('\n', s - 1) + 1, m = v.slice(ls).match(/^ {1,4}/);
+      if (m) { code.setSelectionRange(ls, ls + m[0].length); ins(''); code.setSelectionRange(s - m[0].length, s - m[0].length); }
+    } else ins('    ');
+  } else if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+    e.preventDefault();
+    const ln = v.slice(v.lastIndexOf('\n', s - 1) + 1, s), ind = ln.match(/^\s*/)[0];
+    if (/\{\s*$/.test(ln) && v[t] === '}') { ins(`\n${ind}    \n${ind}`); const p = code.selectionStart - ind.length - 1; code.setSelectionRange(p, p); }
+    else ins('\n' + ind + (/\{\s*$/.test(ln) ? '    ' : ''));
+  } else if (e.key === '}' && s === t && /^\s+$/.test(v.slice(v.lastIndexOf('\n', s - 1) + 1, s))) {
+    e.preventDefault();
+    const ls = v.lastIndexOf('\n', s - 1) + 1;
+    code.setSelectionRange(Math.max(ls, s - 4), s); ins('}');
+  } else if ('([{"\''.includes(e.key) && s !== t) {
+    e.preventDefault();
+    ins(e.key + v.slice(s, t) + { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" }[e.key]);
+  }
+});
+
+// ---- run ----
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+async function go() {
+  if (run.disabled) return;
+  run.disabled = true; run.textContent = 'Running…'; stat.textContent = '';
+  out.innerHTML = '<span class="m">Compiling…</span>';
+  try {
+    const r = await fetch('/api/run', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(state()) });
+    const d = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+    if (d.error) throw new Error(d.error);
+    let h = '';
+    if (d.compile) h += `<span class="${d.stdout || d.status === '0' ? 'm' : 'e'}">${esc(d.compile)}</span>\n`;
+    if (d.stdout) h += esc(d.stdout);
+    if (d.stderr) h += `<span class="e">${esc(d.stderr)}</span>`;
+    out.innerHTML = h || '<span class="m">(no output)</span>';
+    const ok = d.status === '0';
+    stat.innerHTML = `<span style="color:var(--${ok ? 'ok' : 'err'})">${d.signal ? esc(d.signal) : 'exit ' + esc(String(d.status ?? '?'))}</span> · ${d.ms} ms`;
+  } catch (err) {
+    out.innerHTML = `<span class="e">${esc(err.message)}</span>`;
+  } finally {
+    run.disabled = false; run.textContent = '▶ Run';
+  }
+}
+run.onclick = go;
+addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); go(); } });
+['stdin', 'std', 'opt', 'cc'].forEach((id) => $(id).addEventListener('change', save));
+$('stdin').addEventListener('input', save);
+
+$('share').onclick = async () => {
+  const url = `${location.origin}${location.pathname}#${await pack(state())}`;
+  history.replaceState(null, '', url);
+  try { await navigator.clipboard.writeText(url); $('share').textContent = 'Copied!'; }
+  catch { prompt('Copy this link:', url); }
+  setTimeout(() => ($('share').textContent = 'Share'), 1500);
+};
+
+// ---- init ----
+(async () => {
+  let s = null;
+  if (location.hash.length > 1) try { s = await unpack(location.hash.slice(1)); } catch {}
+  if (!s) try { s = JSON.parse(store.get('cpp')); } catch {}
+  apply(s || { code: DEMO });
+  lines(); pos();
+
+  try {
+    const list = await (await fetch('/api/compilers')).json();
+    if (Array.isArray(list) && list.length) {
+      const cc = $('cc'), want = cc.dataset.want || 'gcc-head';
+      cc.innerHTML = list.map((c) => `<option value="${esc(c.name)}">${esc(c.label)}</option>`).join('');
+      cc.value = list.some((c) => c.name === want) ? want : list[0].name;
+    }
+  } catch {}
+})();
+</script>
+</body>
+</html>
